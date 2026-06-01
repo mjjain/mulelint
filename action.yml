@@ -1,0 +1,123 @@
+name: "MuleSoft Compliance Checker"
+description: "Check your MuleSoft Mule 4 application against best practices, security, API standards, and custom compliance rules."
+author: "MuleSoft Compliance Checker"
+
+branding:
+  icon: "check-circle"
+  color: "blue"
+
+inputs:
+  path:
+    description: "Path to the Mule project directory."
+    required: false
+    default: "."
+  threshold:
+    description: "Minimum compliance score (0-100) to pass. Default: 80."
+    required: false
+    default: "80"
+  custom-rules:
+    description: "Path to a custom rules YAML file with XPath-based checks."
+    required: false
+    default: ""
+  post-comment:
+    description: "Post the compliance report as a PR comment. Requires pull-requests: write permission."
+    required: false
+    default: "true"
+  output:
+    description: "Path to write the full JSON report file."
+    required: false
+    default: ""
+
+outputs:
+  score:
+    description: "Overall compliance score (0-100)."
+    value: ${{ steps.run.outputs.score }}
+  grade:
+    description: "Letter grade (A-F)."
+    value: ${{ steps.run.outputs.grade }}
+  passed:
+    description: "Whether the check passed the threshold (true/false)."
+    value: ${{ steps.run.outputs.passed }}
+  total-rules:
+    description: "Total number of rules checked."
+    value: ${{ steps.run.outputs.total-rules }}
+  total-passed:
+    description: "Number of rules that passed."
+    value: ${{ steps.run.outputs.total-passed }}
+  total-failed:
+    description: "Number of rules that failed."
+    value: ${{ steps.run.outputs.total-failed }}
+  total-warnings:
+    description: "Number of rules with warnings."
+    value: ${{ steps.run.outputs.total-warnings }}
+  markdown:
+    description: "The full markdown compliance report."
+    value: ${{ steps.run.outputs.markdown }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+        cache: pip
+        cache-dependency-path: ${{ github.action_path }}/action-requirements.txt
+
+    - name: Install dependencies
+      shell: bash
+      run: pip install -r "${{ github.action_path }}/action-requirements.txt"
+
+    - name: Run compliance check
+      id: run
+      shell: bash
+      continue-on-error: true
+      env:
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_THRESHOLD: ${{ inputs.threshold }}
+        INPUT_CUSTOM_RULES: ${{ inputs.custom-rules }}
+        INPUT_OUTPUT: ${{ inputs.output }}
+      run: bash "${{ github.action_path }}/entrypoint.sh"
+
+    - name: Post or update PR comment
+      if: inputs.post-comment == 'true' && github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const marker = '<!-- mulesoft-compliance-checker -->';
+          const body = `${{ steps.run.outputs.markdown }}`;
+          if (!body || !body.trim()) {
+            core.warning('No compliance summary to post.');
+            return;
+          }
+
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+
+          const existing = comments.find(c => c.body && c.body.includes(marker));
+
+          if (existing) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: existing.id,
+              body: body,
+            });
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body,
+            });
+          }
+
+    - name: Check result
+      if: steps.run.outcome == 'failure'
+      shell: bash
+      run: |
+        echo "::error::Compliance score is below the ${{ inputs.threshold }}% threshold."
+        exit 1

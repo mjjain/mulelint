@@ -1,0 +1,8 @@
+rules:
+  - id: CUSTOM-001
+    name: Global error handler required
+    description: All flows must have an error handler (custom org policy).
+    severity: warning
+    xpath: "//mule:flow[not(mule:error-handler)]"
+    message: "Flow '{flow_name}' does not use the organization's global error handler."
+    remediation: "Add an error-handler referencing the org-standard global error handler."

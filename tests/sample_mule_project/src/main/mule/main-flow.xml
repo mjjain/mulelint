@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:http="http://www.mulesoft.org/schema/mule/http"
+      xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="
+        http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+        http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+        http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+
+    <!-- HTTP Listener Config - intentionally missing TLS and using plain HTTP -->
+    <http:listener-config name="HTTP_Listener_Config">
+        <http:listener-connection host="0.0.0.0" port="8081" protocol="HTTP"/>
+    </http:listener-config>
+
+    <!-- HTTP Request Config - missing timeout, hardcoded URL -->
+    <http:request-config name="HTTP_Request_Config">
+        <http:request-connection host="http://api.example.com" port="443" protocol="HTTP"/>
+    </http:request-config>
+
+    <!-- Flow with intentional violations -->
+    <flow name="GetCustomerDetails">
+        <http:listener config-ref="HTTP_Listener_Config" path="/customers"/>
+        <logger level="INFO" message="Received request for customer, password=#[attributes.queryParams.password]"/>
+        <http:request config-ref="HTTP_Request_Config" method="GET" path="/api/customers"/>
+        <ee:transform>
+            <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    id: payload.id,
+    name: payload.name,
+    email: payload.email
+}]]></ee:set-payload>
+        </ee:transform>
+    </flow>
+
+    <!-- Another flow without error handler and bad naming -->
+    <flow name="process_orders_flow">
+        <http:listener config-ref="HTTP_Listener_Config" path="/orders"/>
+        <http:request config-ref="HTTP_Request_Config" method="POST" path="/api/orders"/>
+    </flow>
+
+    <!-- Sub-flow (should not require error handler) -->
+    <sub-flow name="transform-response">
+        <ee:transform>
+            <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+        </ee:transform>
+    </sub-flow>
+</mule>

@@ -1,0 +1,24 @@
+/* Smooth transitions for the drag & drop zone */
+#dropZone {
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+/* Ensure the file input covers the full drop zone */
+#dropZone input[type="file"] {
+    cursor: pointer;
+}
+
+/* Finding row expand animation */
+details[open] summary ~ * {
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Filter button active state */
+.filter-btn.active {
+    ring: 2px;
+}

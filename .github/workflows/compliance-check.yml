@@ -1,0 +1,34 @@
+name: MuleSoft Compliance Check
+
+on:
+  pull_request:
+    branches: [main, master, develop]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  compliance-check:
+    name: Compliance Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run MuleSoft Compliance Check
+        id: compliance
+        uses: ./
+        with:
+          path: "."
+          threshold: "80"
+          post-comment: "true"
+
+      - name: Print results
+        if: always()
+        run: |
+          echo "Score: ${{ steps.compliance.outputs.score }}%"
+          echo "Grade: ${{ steps.compliance.outputs.grade }}"
+          echo "Passed: ${{ steps.compliance.outputs.passed }}"
+          echo "Rules: ${{ steps.compliance.outputs.total-rules }} checked, ${{ steps.compliance.outputs.total-passed }} passed, ${{ steps.compliance.outputs.total-failed }} failed"

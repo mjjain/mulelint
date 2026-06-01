@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Upload - MuleSoft Compliance Checker{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="text-center mb-10">
+        <h1 class="text-3xl font-bold text-gray-900 mb-3">Check Your Mule App Compliance</h1>
+        <p class="text-gray-600 text-lg">Upload a MuleSoft Mule 4 project archive (.zip or .jar) to get an instant compliance report.</p>
+    </div>
+
+    {% if error %}
+    <div class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">
+        <strong>Error:</strong> {{ error }}
+    </div>
+    {% endif %}
+
+    <form id="uploadForm" action="/api/check" method="post" enctype="multipart/form-data" class="space-y-6">
+        <!-- Drop zone -->
+        <div id="dropZone"
+             class="relative border-2 border-dashed border-gray-300 rounded-xl p-12 text-center
+                    hover:border-mule-400 hover:bg-mule-50 transition-colors duration-200 cursor-pointer">
+            <input type="file" name="file" id="fileInput" accept=".zip,.jar"
+                   class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" required>
+            <div id="dropContent">
+                <svg class="mx-auto h-14 w-14 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                          d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                </svg>
+                <p class="text-gray-600 text-lg font-medium">Drop your Mule project here</p>
+                <p class="text-gray-400 text-sm mt-1">or click to browse &mdash; .zip or .jar up to 50 MB</p>
+            </div>
+            <div id="fileInfo" class="hidden">
+                <svg class="mx-auto h-14 w-14 text-mule-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <p class="text-mule-700 text-lg font-medium" id="fileName"></p>
+                <p class="text-gray-400 text-sm mt-1" id="fileSize"></p>
+            </div>
+        </div>
+
+        <!-- Submit button -->
+        <button type="submit" id="submitBtn"
+                class="w-full bg-mule-600 text-white py-3 px-6 rounded-lg font-semibold text-lg
+                       hover:bg-mule-700 focus:outline-none focus:ring-4 focus:ring-mule-200
+                       disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                disabled>
+            <span id="btnText">Run Compliance Check</span>
+            <span id="btnLoading" class="hidden items-center justify-center gap-2">
+                <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+                Analyzing...
+            </span>
+        </button>
+    </form>
+
+    <!-- What we check -->
+    <div class="mt-14 grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div class="bg-white rounded-lg border border-gray-200 p-5">
+            <div class="flex items-center gap-3 mb-2">
+                <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-blue-100 text-blue-600">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </span>
+                <h3 class="font-semibold text-gray-900">Best Practices</h3>
+            </div>
+            <p class="text-sm text-gray-500">Naming conventions, error handling, logging, timeouts, reconnection strategies.</p>
+        </div>
+        <div class="bg-white rounded-lg border border-gray-200 p-5">
+            <div class="flex items-center gap-3 mb-2">
+                <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-red-100 text-red-600">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                </span>
+                <h3 class="font-semibold text-gray-900">Security</h3>
+            </div>
+            <p class="text-sm text-gray-500">Hardcoded credentials, HTTPS enforcement, TLS, authentication, data masking.</p>
+        </div>
+        <div class="bg-white rounded-lg border border-gray-200 p-5">
+            <div class="flex items-center gap-3 mb-2">
+                <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-green-100 text-green-600">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                </span>
+                <h3 class="font-semibold text-gray-900">API Standards</h3>
+            </div>
+            <p class="text-sm text-gray-500">Autodiscovery, RAML/OAS specs, APIkit usage, versioning, health checks.</p>
+        </div>
+        <div class="bg-white rounded-lg border border-gray-200 p-5">
+            <div class="flex items-center gap-3 mb-2">
+                <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-purple-100 text-purple-600">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"/></svg>
+                </span>
+                <h3 class="font-semibold text-gray-900">Custom Rules</h3>
+            </div>
+            <p class="text-sm text-gray-500">Organization-specific rules defined in YAML with XPath-based matching.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const dropContent = document.getElementById('dropContent');
+const fileInfo = document.getElementById('fileInfo');
+const fileName = document.getElementById('fileName');
+const fileSize = document.getElementById('fileSize');
+const submitBtn = document.getElementById('submitBtn');
+const uploadForm = document.getElementById('uploadForm');
+const btnText = document.getElementById('btnText');
+const btnLoading = document.getElementById('btnLoading');
+
+function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+}
+
+function showFile(file) {
+    dropContent.classList.add('hidden');
+    fileInfo.classList.remove('hidden');
+    fileName.textContent = file.name;
+    fileSize.textContent = formatSize(file.size);
+    submitBtn.disabled = false;
+    dropZone.classList.add('border-mule-400', 'bg-mule-50');
+}
+
+fileInput.addEventListener('change', function() {
+    if (this.files.length > 0) showFile(this.files[0]);
+});
+
+['dragover', 'dragenter'].forEach(evt => {
+    dropZone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        dropZone.classList.add('border-mule-400', 'bg-mule-50');
+    });
+});
+
+['dragleave', 'drop'].forEach(evt => {
+    dropZone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        if (evt === 'dragleave') {
+            dropZone.classList.remove('border-mule-400', 'bg-mule-50');
+        }
+    });
+});
+
+dropZone.addEventListener('drop', (e) => {
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        fileInput.files = files;
+        showFile(files[0]);
+    }
+});
+
+uploadForm.addEventListener('submit', function() {
+    btnText.classList.add('hidden');
+    btnLoading.classList.remove('hidden');
+    btnLoading.classList.add('flex');
+    submitBtn.disabled = true;
+});
+</script>
+{% endblock %}
