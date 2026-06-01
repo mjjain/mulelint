@@ -24,7 +24,7 @@ from app.models import ComplianceReport
 
 APP_DIR = Path(__file__).resolve().parent
 
-app = FastAPI(title="MuleSoft Compliance Checker")
+app = FastAPI(title="MuleSoft Application Best Practices Checker")
 app.mount("/static", StaticFiles(directory=str(APP_DIR / "static")), name="static")
 templates = Jinja2Templates(directory=str(APP_DIR / "templates"))
 

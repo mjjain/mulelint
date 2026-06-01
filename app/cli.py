@@ -1,4 +1,4 @@
-"""CLI entry point for the MuleSoft Compliance Checker.
+"""CLI entry point for the MuleSoft Application Best Practices Checker.
 
 Usage:
     python -m app.cli --path /path/to/mule-project

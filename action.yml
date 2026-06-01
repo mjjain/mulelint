@@ -1,6 +1,6 @@
-name: "MuleSoft Compliance Checker"
+name: "MuleSoft Application Best Practices Checker"
 description: "Check your MuleSoft Mule 4 application against best practices, security, API standards, and custom compliance rules."
-author: "MuleSoft Compliance Checker"
+author: "MuleSoft Application Best Practices Checker"
 
 branding:
   icon: "check-circle"
