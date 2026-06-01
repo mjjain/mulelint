@@ -1,26 +1,102 @@
 # MuleSoft Compliance Checker
 
-A web application that analyzes MuleSoft Mule 4 applications for compliance with best practices, security standards, API design guidelines, and custom organizational rules.
+Analyze MuleSoft Mule 4 applications for compliance with best practices, security standards, API design guidelines, and custom organizational rules. Available as a **Web UI**, **CLI**, and **GitHub Action**.
 
 ## Features
 
-- **Upload & Analyze**: Upload a Mule project ZIP and get an instant compliance report
 - **40+ Built-in Rules** across four categories:
-  - Best Practices (naming, error handling, logging, timeouts)
-  - Security (hardcoded secrets, HTTPS, TLS, authentication)
-  - API Standards (autodiscovery, versioning, health checks)
-  - Custom Rules (YAML-configurable XPath-based checks)
-- **Visual Dashboard**: Compliance score, category breakdowns, filterable findings
-- **Export**: Download reports as JSON
+  - **Best Practices** — naming conventions, error handling, logging, timeouts, flow size
+  - **Security** — hardcoded secrets, HTTPS enforcement, TLS, authentication
+  - **API Standards** — autodiscovery, versioning, health checks, content types
+  - **Custom Rules** — YAML-configurable XPath-based checks
+- **Visual Dashboard**: Compliance score, letter grade, category breakdowns, filterable findings
+- **Multiple interfaces**: Web UI, CLI, and GitHub Action
+- **Export**: JSON and Markdown reports
 
-## Quick Start
+---
+
+## Usage
+
+### 1. GitHub Action (CI/CD)
+
+Add this to your Mule project's `.github/workflows/compliance.yml`:
+
+```yaml
+name: MuleSoft Compliance Check
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  compliance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Compliance Check
+        id: compliance
+        uses: mjjain/mule-compliance-action@main
+        with:
+          path: "."
+          threshold: "80"
+          post-comment: "true"
+
+      - name: Fail if non-compliant
+        if: steps.compliance.outputs.passed == 'false'
+        run: exit 1
+```
+
+#### Inputs
+
+| Input | Default | Description |
+|-------|---------|-------------|
+| `path` | `.` | Path to the Mule project directory |
+| `threshold` | `80` | Minimum passing score (0–100) |
+| `custom-rules` | | Path to a custom rules YAML file |
+| `post-comment` | `true` | Post summary as a PR comment |
+| `output` | | Path to write the full JSON report |
+
+#### Outputs
+
+| Output | Description |
+|--------|-------------|
+| `score` | Overall compliance score (0–100) |
+| `grade` | Letter grade (A–F) |
+| `passed` | Whether the check passed the threshold (`true`/`false`) |
+| `total-rules` | Total number of rules checked |
+| `total-passed` | Number of rules that passed |
+| `total-failed` | Number of rules that failed |
+| `total-warnings` | Number of warnings |
+| `markdown` | Full markdown compliance report |
+
+### 2. CLI
+
+```bash
+pip install -r requirements.txt
+
+# Basic check
+python -m app.cli --path /path/to/mule-project
+
+# With threshold and JSON output
+python -m app.cli --path . --threshold 80 --format json
+
+# With custom rules
+python -m app.cli --path . --custom-rules rules_config/custom_rules.yaml
+```
+
+### 3. Web UI
 
 ```bash
 pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-Then open http://localhost:8000 in your browser.
+Open http://localhost:8000, upload a Mule project ZIP/JAR, and view the compliance report.
+
+---
 
 ## Custom Rules
 
@@ -36,11 +112,16 @@ rules:
     message: "Flow '{flow_name}' does not use the global error handler"
 ```
 
+---
+
 ## Project Structure
 
 ```
+action.yml             # GitHub Action manifest
+entrypoint.sh          # GitHub Action entry point
 app/
   main.py              # FastAPI routes and app config
+  cli.py               # Command-line interface
   models.py            # Pydantic data models
   core/
     extractor.py       # ZIP upload handling
@@ -57,3 +138,7 @@ app/
   static/              # CSS assets
 rules_config/          # Rule configuration files
 ```
+
+## License
+
+MIT
