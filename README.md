@@ -38,7 +38,7 @@ jobs:
 
       - name: Run Compliance Check
         id: compliance
-        uses: mjjain/mule-compliance-action@main
+        uses: mjjain/mulelint@main
         with:
           path: "."
           threshold: "80"

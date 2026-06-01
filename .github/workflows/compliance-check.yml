@@ -1,4 +1,4 @@
-name: MuleSoft Compliance Check
+name: MuleLint
 
 on:
   pull_request:
