@@ -19,10 +19,10 @@ Analyze MuleSoft Mule 4 applications for compliance with best practices, securit
 
 ### 1. GitHub Action (CI/CD)
 
-Add this to your Mule project's `.github/workflows/compliance.yml`:
+Add this to your Mule project's `.github/workflows/mulelint.yml`:
 
 ```yaml
-name: MuleSoft Compliance Check
+name: MuleLint
 
 on:
   pull_request:
