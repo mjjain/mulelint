@@ -1,4 +1,4 @@
-# MuleSoft Application Best Practices Checker
+# MuleLint — MuleSoft Application Best Practices Checker
 
 Analyze MuleSoft Mule 4 applications for compliance with best practices, security standards, API design guidelines, and custom organizational rules. Available as a **Web UI**, **CLI**, and **GitHub Action**.
 

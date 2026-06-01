@@ -1,4 +1,4 @@
-"""CLI entry point for the MuleSoft Application Best Practices Checker.
+"""CLI entry point for MuleLint — MuleSoft Application Best Practices Checker.
 
 Usage:
     python -m app.cli --path /path/to/mule-project
@@ -107,7 +107,7 @@ def build_markdown_summary(report: ComplianceReport, threshold: float) -> str:
 
     lines = [
         COMMENT_MARKER,
-        "## MuleSoft Compliance Report",
+        "## MuleLint — Compliance Report",
         "",
         f"**Score: {report.overall_score}% ({report.letter_grade.value})** "
         f"&mdash; {status} (threshold: {threshold}%)",
