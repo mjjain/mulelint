@@ -171,15 +171,34 @@ def build_markdown_summary(report: ComplianceReport, threshold: float) -> str:
 # ---------------------------------------------------------------------------
 
 def _resolve_project_path(path_arg: str) -> str | None:
-    """Find the Mule project root, walking up if needed."""
+    """Find the Mule project root, checking common locations."""
     p = Path(path_arg).resolve()
     if _is_mule_project(p):
         return str(p)
+
+    if not p.is_dir():
+        return None
+
     # Check immediate children (mono-repo case)
-    if p.is_dir():
-        for child in p.iterdir():
+    for child in p.iterdir():
+        if child.is_dir() and _is_mule_project(child):
+            return str(child)
+
+    # Packaged Mule app: source lives under META-INF/mule-src/<app-name>/
+    mule_src = p / "META-INF" / "mule-src"
+    if mule_src.is_dir():
+        for child in mule_src.iterdir():
             if child.is_dir() and _is_mule_project(child):
                 return str(child)
+
+    # Fallback: recursive search (max depth 4) for pom.xml or mule-artifact.json
+    for depth_limit in range(2, 5):
+        for candidate in p.rglob("pom.xml"):
+            if len(candidate.relative_to(p).parts) <= depth_limit:
+                parent = candidate.parent
+                if _is_mule_project(parent):
+                    return str(parent)
+
     return None
 
 
