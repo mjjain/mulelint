@@ -1,6 +1,6 @@
 name: "MuleLint — MuleSoft Application Best Practices Checker"
 description: "Check your MuleSoft Mule 4 application against best practices, security, API standards, and custom compliance rules."
-author: "mjjain"
+author: "trinitymuleworks"
 
 branding:
   icon: "check-circle"
